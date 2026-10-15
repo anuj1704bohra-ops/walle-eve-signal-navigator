@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Signal Navigator | Autonomous Search &amp; Bayesian Inference</title>
+  <meta name="description" content="Autonomous search and Bayesian inference mission control interface for WALL-E exploring uncharted wasteland terrain.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="dark-theme">
+  <!-- Top Navigation Bar -->
+  <header class="app-header" role="banner">
+    <div class="header-left">
+      <div class="app-logo" aria-hidden="true">
+        <!-- Minimal Geometric Rover / Antenna Logo -->
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+          <circle cx="9" cy="9" r="7.5" stroke="#E8743B" stroke-width="1.25"/>
+          <circle cx="9" cy="9" r="3" fill="#E8743B"/>
+          <line x1="9" y1="1.5" x2="9" y2="4.5" stroke="#E8743B" stroke-width="1.25"/>
+          <line x1="9" y1="13.5" x2="9" y2="16.5" stroke="#E8743B" stroke-width="1.25"/>
+          <line x1="1.5" y1="9" x2="4.5" y2="9" stroke="#E8743B" stroke-width="1.25"/>
+          <line x1="13.5" y1="9" x2="16.5" y2="9" stroke="#E8743B" stroke-width="1.25"/>
+        </svg>
+      </div>
+      <div class="header-titles">
+        <h1 class="header-title">Signal Navigator</h1>
+        <span class="header-sub">POMDP autonomous search</span>
+      </div>
+    </div>
+    
+    <div class="header-right">
+      <div class="mission-select-wrap">
+        <label for="missionSelect" class="field-label">Mission</label>
+        <select id="missionSelect" class="select-input" aria-label="Select mission configuration">
+          <option value="wasteland">Sector 7 — Wasteland baseline</option>
+          <option value="dust_storm">Sol 404 — Heavy dust storm</option>
+          <option value="decoy">Sector 9 — Decoy challenge</option>
+        </select>
+      </div>
+
+      <div class="status-indicator" id="missionStatusWrapper" title="Agent status">
+        <span class="status-dot" id="statusDot"></span>
+        <span class="status-text" id="missionStatusText">Agent active</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Two-Column Instrument Workspace -->
+  <main class="workspace-grid" role="main">
+    
+    <!-- Left Column: Large Hero Grid Map & Inline Controls -->
+    <section class="grid-column" aria-label="Grid world simulation">
+      <div class="section-toolbar">
+        <div class="section-title-wrap">
+          <span class="section-title">Grid world</span>
+          <span id="gridDimensionsBadge" class="info-pill mono-val">16 × 16</span>
+        </div>
+        
+        <div class="layer-toggles" role="group" aria-label="Layer visibility">
+          <label class="toggle-control" title="Toggle 2D Bayesian posterior probability density overlay">
+            <input type="checkbox" id="toggleHeatmap" checked>
+            <span class="toggle-box"></span>
+            <span class="toggle-text">Belief heatmap</span>
+          </label>
+          <label class="toggle-control" title="Toggle exploration breadcrumb trajectory">
+            <input type="checkbox" id="toggleTrail" checked>
+            <span class="toggle-box"></span>
+            <span class="toggle-text">Path trail</span>
+          </label>
+          <label class="toggle-control" title="Toggle true target location for evaluation">
+            <input type="checkbox" id="toggleObserverMode">
+            <span class="toggle-box"></span>
+            <span class="toggle-text">Ground truth</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Canvas Viewport Frame -->
+      <div class="canvas-viewport-wrap">
+        <div class="canvas-frame">
+          <canvas id="missionCanvas" width="560" height="560" aria-label="Simulation grid canvas"></canvas>
+          <div id="cellTooltip" class="cell-tooltip hidden" role="tooltip"></div>
+        </div>
+      </div>
+
+      <!-- Slim Transport Controls Bar Directly Under Map -->
+      <div class="playback-toolbar" role="toolbar" aria-label="Simulation controls">
+        <div class="transport-group">
+          <button id="btnPrevStep" class="btn-ctrl" title="Step backward (Left Arrow)" aria-label="Step backward">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M3 2h2v12H3zm3 6 8-6v12z"/>
+            </svg>
+            <span>Prev</span>
+          </button>
+          
+          <button id="btnPlayPause" class="btn-ctrl btn-primary" title="Run / Pause simulation (Space)" aria-label="Run simulation">
+            <svg id="playIcon" width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M4 2v12l10-6z"/>
+            </svg>
+            <span id="playBtnLabel">Run</span>
+          </button>
+          
+          <button id="btnNextStep" class="btn-ctrl" title="Step forward (Right Arrow)" aria-label="Step forward">
+            <span>Next</span>
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M13 2h-2v12h2zm-3 6L2 2v12z"/>
+            </svg>
+          </button>
+
+          <button id="btnReset" class="btn-ctrl btn-subtle" title="Reset to initial step (R)" aria-label="Reset simulation">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+              <path d="M8 4.5V.5L11 2.5 8 4.5z"/>
+            </svg>
+            <span>Reset</span>
+          </button>
+        </div>
+
+        <div class="scrubber-wrap">
+          <div class="scrubber-header">
+            <span class="scrubber-label">Step</span>
+            <span class="scrubber-counter mono-val"><strong id="currentStepDisplay">0</strong> / <span id="maxStepDisplay">0</span></span>
+          </div>
+          <input type="range" id="stepProgress" min="0" max="0" value="0" class="scrubber-slider" aria-label="Step progress slider">
+        </div>
+
+        <div class="speed-group">
+          <span class="speed-label">Speed</span>
+          <div class="pill-selector" role="radiogroup" aria-label="Playback speed">
+            <button type="button" class="speed-pill" data-speed="0.5">0.5×</button>
+            <button type="button" class="speed-pill active" data-speed="1.0">1×</button>
+            <button type="button" class="speed-pill" data-speed="2.0">2×</button>
+            <button type="button" class="speed-pill" data-speed="4.0">4×</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Subtle Monochrome Grid Legend -->
+      <div class="grid-legend" aria-label="Map legend">
+        <div class="legend-item"><span class="marker marker-agent"></span> Agent rover</div>
+        <div class="legend-item"><span class="marker marker-target"></span> Target hypothesis</div>
+        <div class="legend-item"><span class="marker marker-solar"></span> Charging pad</div>
+        <div class="legend-item"><span class="marker marker-clue"></span> Clue beacon</div>
+        <div class="legend-item"><span class="marker marker-obstacle"></span> Obstacle</div>
+        <div class="legend-item"><span class="marker marker-hazard"></span> Hazard</div>
+      </div>
+    </section>
+
+    <!-- Right Column: Stacked Telemetry Panels (Minimal Chrome) -->
+    <aside class="telemetry-column" aria-label="Telemetry and diagnostics">
+      
+      <!-- 1. Agent State (Clean Key/Value List, No 4 Boxes) -->
+      <section class="telemetry-section" aria-label="Agent state">
+        <h2 class="subheading">Agent state</h2>
+        <dl class="state-kv-list">
+          <div class="state-kv-row">
+            <dt>Mode</dt>
+            <dd><span id="agentModeBadge" class="mode-tag">Initialising</span></dd>
+          </div>
+          <div class="state-kv-row">
+            <dt>Last action</dt>
+            <dd><span id="lastActionText" class="mono-val">Startup ping</span></dd>
+          </div>
+          <div class="state-kv-row">
+            <dt>Position</dt>
+            <dd><span id="currentCoordinatesText" class="mono-val">(1, 1)</span></dd>
+          </div>
+          <div class="state-kv-row">
+            <dt>Clues analysed</dt>
+            <dd><span id="cluesCountText" class="mono-val">0 / 3</span></dd>
+          </div>
+          <div class="state-kv-row state-rationale-row">
+            <dt>Action rationale</dt>
+            <dd><span id="actionRationaleText" class="rationale-text">Initialising telemetry and broad posterior distribution.</span></dd>
+          </div>
+        </dl>
+      </section>
+
+      <!-- 2. Chart Panel: Shannon Entropy Line Chart + Thin Battery Bar -->
+      <section class="telemetry-section" aria-label="Entropy and battery charts">
+        <div class="entropy-chart-header">
+          <div class="chart-title-wrap">
+            <h2 class="subheading">Shannon entropy</h2>
+            <span class="entropy-caption">Spatial uncertainty H(B)</span>
+          </div>
+          <div class="entropy-readout">
+            <span id="entropyValueText" class="entropy-current mono-val">7.84</span>
+            <span class="entropy-unit">bits</span>
+            <span id="entropyDeltaTag" class="entropy-delta mono-val">Δ 0.00</span>
+          </div>
+        </div>
+
+        <!-- SVG Line Chart of Entropy vs Step -->
+        <div class="entropy-chart-box">
+          <svg id="entropyChart" class="entropy-svg" viewBox="0 0 280 64" preserveAspectRatio="none" aria-label="Shannon entropy vs step chart">
+            <!-- Axes, grid lines, area fill and line curve injected by JS -->
+            <path id="entropyAreaPath" d="" fill="rgba(232, 116, 59, 0.08)"></path>
+            <path id="entropyLinePath" d="" fill="none" stroke="#E8743B" stroke-width="1.75"></path>
+            <circle id="entropyCurrentPoint" cx="0" cy="0" r="3" fill="#E8743B"></circle>
+          </svg>
+        </div>
+
+        <!-- Thin Battery Bar with 20% Fail-Safe Tick -->
+        <div class="battery-section">
+          <div class="battery-header">
+            <span class="battery-label">Battery level</span>
+            <div class="battery-readout-wrap">
+              <span id="batteryPercentText" class="battery-percent mono-val">100%</span>
+              <span id="batteryCostLabel" class="battery-cost mono-val">Cost: 0%</span>
+            </div>
+          </div>
+          <div class="battery-track" title="Battery gauge with 20% fail-safe threshold">
+            <div id="batteryProgressBar" class="battery-fill" style="width: 100%;"></div>
+            <div class="fail-safe-tick" style="left: 20%;" title="20% Fail-safe threshold"></div>
+          </div>
+          <div class="battery-footer">
+            <span class="tick-caption">20% safe return threshold</span>
+            <span id="batteryHealthStatus" class="battery-status-text">Adequate reserve</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. Posterior P(target): Horizontal Probability Bars -->
+      <section class="telemetry-section" aria-label="Posterior probability distribution">
+        <div class="posterior-header">
+          <h2 class="subheading">Posterior P(target)</h2>
+          <span id="distributionConfidenceLabel" class="posterior-sub mono-val">1 hypothesis</span>
+        </div>
+        <div id="topHypothesesList" class="posterior-list" role="list" aria-label="Ranked candidate coordinates">
+          <!-- Dynamically populated candidate bars -->
+        </div>
+      </section>
+
+      <!-- 4. Event Log: Compact Single-Line Rows (Click to Expand) -->
+      <section class="telemetry-section event-log-section" aria-label="Simulation event log">
+        <div class="log-header">
+          <div class="log-title-wrap">
+            <h2 class="subheading">Event log</h2>
+            <span id="eventCountBadge" class="info-pill mono-val">0</span>
+          </div>
+          <div class="log-actions">
+            <button id="btnAutoScroll" class="btn-micro active" title="Toggle auto-scroll to latest event">Auto-scroll</button>
+            <button id="btnClearLog" class="btn-micro" title="Clear displayed event history">Clear</button>
+          </div>
+        </div>
+        
+        <div id="reasoningLogContainer" class="event-rows-container" role="feed" aria-live="polite">
+          <!-- Compact single-line event rows inserted dynamically -->
+        </div>
+      </section>
+
+      <!-- Footer Utility Links -->
+      <div class="panel-footer-actions">
+        <button id="btnDownloadReport" class="btn-link" title="Open post-mission evaluation report">
+          <span>Mission report</span>
+        </button>
+        <span class="action-divider">/</span>
+        <button id="btnDownloadTrace" class="btn-link" title="Download raw JSON action trace">
+          <span>Export trace JSON</span>
+        </button>
+      </div>
+
+    </aside>
+  </main>
+
+  <!-- Mission Evaluation Report Modal Dialog -->
+  <div id="reportModal" class="modal-dialog hidden" role="dialog" aria-modal="true" aria-labelledby="modalReportTitle">
+    <div class="modal-surface">
+      <div class="modal-header">
+        <h2 id="modalReportTitle" class="modal-title">Mission evaluation report</h2>
+        <button id="btnCloseModal" class="modal-close" aria-label="Close modal">&times;</button>
+      </div>
+      <div id="modalReportBody" class="modal-body">
+        <!-- Rendered report content -->
+      </div>
+      <div class="modal-footer">
+        <button id="btnModalCloseSecondary" class="btn-ctrl">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="mission_traces.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

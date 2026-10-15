@@ -1,0 +1,69 @@
+mission_name: "Mission Sol 404 - Heavy Dust Storm"
+seed: 101
+grid:
+  width: 14
+  height: 14
+  wall_e_start: [0, 0]
+  obstacles:
+    - [2, 1]
+    - [2, 2]
+    - [2, 3]
+    - [5, 6]
+    - [6, 6]
+    - [7, 6]
+    - [10, 9]
+    - [10, 10]
+  solar_recharge_stations:
+    - [0, 0]
+    - [0, 13]
+    - [13, 0]
+    - [6, 7]
+  hazards:
+    - [3, 4]
+    - [4, 4]
+    - [5, 4]
+    - [8, 8]
+    - [8, 9]
+    - [9, 8]
+
+eve_target:
+  true_position: [11, 11]
+  true_status: "low_power_hibernation"
+  signal_signature: "EVE-DIRECTIVE-ECO-02"
+
+initial_signal:
+  direction_hint: "SOUTH_EAST"
+  strength: 0.22
+  timestamp: "2805-B4-099"
+  noise_std: 0.12
+
+resources:
+  initial_battery: 85
+  max_battery: 100
+  max_steps: 140
+  action_costs:
+    move: 2
+    move_hazard_penalty: 4
+    local_scan: 4
+    long_range_ping: 7
+    analyze_clue: 4
+    recharge_gain: 20
+    wait: 1
+  critical_battery_threshold: 22
+
+clues:
+  - id: "dust_clue_01"
+    position: [3, 1]
+    type: "IONIC_RESIDUE"
+    description: "Electromagnetic trace blown south by the storm."
+    evidence:
+      y_min: 5
+      confidence_boost: 0.20
+  - id: "dust_clue_02"
+    position: [8, 3]
+    type: "PLANT_SPECIMEN_CASING"
+    description: "Plexiglass protection casing found caught on rebar."
+    evidence:
+      x_min: 8
+      y_min: 7
+      confidence_boost: 0.30

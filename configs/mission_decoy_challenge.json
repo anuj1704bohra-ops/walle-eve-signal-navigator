@@ -1,0 +1,81 @@
+{
+  "mission_name": "Mission Sector 9 - Decoy Interference Challenge",
+  "seed": 777,
+  "grid": {
+    "width": 16,
+    "height": 16,
+    "wall_e_start": [0, 0],
+    "obstacles": [
+      [2, 3], [3, 3], [4, 3],
+      [7, 10], [8, 10], [9, 10],
+      [12, 5], [12, 6], [12, 7]
+    ],
+    "solar_recharge_stations": [
+      [0, 0],
+      [0, 15],
+      [15, 0],
+      [8, 8]
+    ],
+    "hazards": [
+      [3, 8], [4, 8], [5, 8]
+    ]
+  },
+  "eve_target": {
+    "true_position": [14, 14],
+    "true_status": "rebooting_diagnostic",
+    "signal_signature": "EVE-DIRECTIVE-GENUINE-99"
+  },
+  "decoys": [
+    {
+      "id": "decoy_beacon_alpha",
+      "position": [2, 12],
+      "strength": 0.45,
+      "signature": "BNL-WEATHER-BEACON-SPOOF",
+      "noise_std": 0.08
+    }
+  ],
+  "initial_signal": {
+    "direction_hint": "SOUTH_EAST",
+    "strength": 0.25,
+    "timestamp": "2805-X9-204",
+    "noise_std": 0.06
+  },
+  "resources": {
+    "initial_battery": 95,
+    "max_battery": 100,
+    "max_steps": 150,
+    "action_costs": {
+      "move": 2,
+      "move_hazard_penalty": 3,
+      "local_scan": 3,
+      "long_range_ping": 5,
+      "analyze_clue": 4,
+      "recharge_gain": 25,
+      "wait": 1
+    },
+    "critical_battery_threshold": 20
+  },
+  "clues": [
+    {
+      "id": "spoof_warning_clue",
+      "position": [4, 5],
+      "type": "CORRUPTED_BEACON_LOG",
+      "description": "Log indicates BNL decoy broadcasting around quadrant (X < 5, Y > 10). Authenticate cryptographic signature EVE-DIRECTIVE-GENUINE-99.",
+      "evidence": {
+        "disqualify_region": {"x_max": 5, "y_min": 10},
+        "confidence_boost": 0.30
+      }
+    },
+    {
+      "id": "genuine_vector_clue",
+      "position": [9, 6],
+      "type": "LASER_ETCHED_GLYPH",
+      "description": "Direct optical laser pulse targeted at extreme South-East corner (X > 11, Y > 11).",
+      "evidence": {
+        "x_min": 11,
+        "y_min": 11,
+        "confidence_boost": 0.40
+      }
+    }
+  ]
+}
