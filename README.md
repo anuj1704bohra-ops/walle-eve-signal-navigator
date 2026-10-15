@@ -135,20 +135,6 @@ python -m unittest tests/test_mission.py
 
 ---
 
-## 🎯 Technical Interview Discussion Guide
-
-When discussing or evaluating this project in a technical interview:
-
-1. **Why POMDP instead of a standard MDP?**
-   * *In a standard MDP, the state is fully observable. In search and reconnaissance, the agent does not know where the target is. Modeling this as a POMDP shifts the state space to a continuous **belief space** (probability distributions over candidate coordinates), allowing principled Bayesian inference.*
-2. **How is the Exploration vs. Exploitation Tradeoff Handled?**
-   * *The agent computes the Shannon entropy $H(B)$ of the belief distribution. High entropy indicates uncertainty, incentivizing exploratory actions (long-range pings, investigating clue beacons). As entropy collapses and posterior mass concentrates on a candidate cell, the policy shifts to exploitation (direct navigation).*
-3. **How are Battery Constraints Enforced?**
-   * *The agent continuously computes $A^*$ path costs to the closest verified solar charging pad. If the remaining battery capacity approaches the return cost plus a safety margin ($\le 20\%$), the policy preempts exploration and issues an emergency recharge goal.*
-4. **Why is the Web UI Built with Canvas & Pure Design Tokens?**
-   * *High-frequency grid updates with 256+ cells benefit from immediate-mode HTML5 Canvas rendering for 60fps telemetry. The CSS design system relies on semantic tokens without heavy framework overhead, adhering to NASA telemetry and aerospace UI design standards.*
-
----
 
 ## 📜 License
 
